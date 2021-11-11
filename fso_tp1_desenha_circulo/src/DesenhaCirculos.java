@@ -12,6 +12,7 @@ import javax.swing.JTextField;
 import javax.swing.JTextArea;
 import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
+import javax.swing.ButtonModel;
 
 public class DesenhaCirculos extends JFrame {
 
@@ -30,6 +31,7 @@ public class DesenhaCirculos extends JFrame {
 	private JButton btnDesenharCirculo;
 	private int numeroInstrucao = 1;
 	private VariaveisDesenharCirculos v;
+	private CanalComunicacao canal;
 
 	/**
 	 * Launch the application.
@@ -49,8 +51,9 @@ public class DesenhaCirculos extends JFrame {
 	
 	private void inicializarVariaveis() {
 		v = new VariaveisDesenharCirculos();
-		CanalComunicacao canal = new CanalComunicacao();
-		canal.escreverMensagem(new Mensagem(1, "teste Desenhar Circulo"));
+		canal = new CanalComunicacao();
+		canal.abrirCanal("teste");
+		canal.getAndSet(new Mensagem(1, "teste Desenhar Circulo"));
 	}
 
 	/**
@@ -69,6 +72,7 @@ public class DesenhaCirculos extends JFrame {
 		btnDesenharCirculo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				escreverConsola("Desenhar circulos. Numero de circulos: " + v.getnCirculos() + " Raio: " + textFldRaio.getText());
+				desenharCirculos(v.getnCirculos(), textFldRaio.getText());
 			}
 		});
 		btnDesenharCirculo.setBounds(6, 21, 152, 29);
@@ -126,6 +130,7 @@ public class DesenhaCirculos extends JFrame {
 			}
 		});
 		buttonGroup.add(rdbtnDireita);
+		rdbtnDireita.setActionCommand("direita");
 		rdbtnDireita.setBounds(284, 96, 141, 23);
 		contentPane.add(rdbtnDireita);
 		
@@ -137,5 +142,17 @@ public class DesenhaCirculos extends JFrame {
 	private void escreverConsola(String texto) {
 		textArea.setText("\n" +numeroInstrucao  + ": " + texto + textArea.getText());
 		numeroInstrucao++;
+	}
+	
+	private void desenharCirculos(int nCirculos, String raio) {
+		for (int i = 0; i < nCirculos; i++) {
+			if(buttonGroup.getSelection().getActionCommand() == "direita") {
+				Mensagem msg = new Mensagem(EnumEstados.CURVA_DIREITA.getEstado(), raio);
+				canal.getAndSet(msg);
+			} else {
+				Mensagem msg = new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), raio);
+				canal.getAndSet(msg);
+			}			
+		}
 	}
 }

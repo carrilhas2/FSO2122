@@ -30,6 +30,7 @@ public class DesenhaQuadrados extends JFrame {
 	private JButton btnDesenharQuadrado;
 	private int numeroInstrucao = 1;
 	private VariaveisDesenharQuadrados v;
+	private CanalComunicacao canal;
 
 	/**
 	 * Launch the application.
@@ -49,6 +50,8 @@ public class DesenhaQuadrados extends JFrame {
 	
 	private void inicializarVariaveis() {
 		v = new VariaveisDesenharQuadrados();
+		canal = new CanalComunicacao();
+		canal.abrirCanal("teste");
 	}
 
 	/**
@@ -67,6 +70,7 @@ public class DesenhaQuadrados extends JFrame {
 		btnDesenharQuadrado.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				escreverConsola("Desenhar quadrados. Numero de quadrados: " + v.getnQuadrados() + " Distancia: " + textFldDistancia.getText());
+				desenharQuadrados(v.getnQuadrados(), textFldDistancia.getText());
 			}
 		});
 		btnDesenharQuadrado.setBounds(6, 21, 152, 29);
@@ -135,5 +139,21 @@ public class DesenhaQuadrados extends JFrame {
 	private void escreverConsola(String texto) {
 		textArea.setText("\n" +numeroInstrucao  + ": " + texto + textArea.getText());
 		numeroInstrucao++;
+	}
+	
+
+	private void desenharQuadrados(int nQuadrados, String distancia) {
+		Mensagem msgReta = new Mensagem(EnumEstados.FRENTE.getEstado(), distancia);
+		Mensagem msgCurvaEsq = new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), "0");
+
+		for(int i = 0; i < nQuadrados; i++) {
+			canal.getAndSet(msgReta);
+			canal.getAndSet(msgCurvaEsq);
+			canal.getAndSet(msgReta);
+			canal.getAndSet(msgCurvaEsq);
+			canal.getAndSet(msgReta);
+			canal.getAndSet(msgCurvaEsq);
+			canal.getAndSet(msgReta);
+		}
 	}
 }

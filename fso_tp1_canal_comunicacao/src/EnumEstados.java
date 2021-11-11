@@ -6,7 +6,9 @@ public enum EnumEstados {
 	TRAS(3),
 	CURVA_ESQUERDA(4),
 	CURVA_DIREITA(5),
-	PARAR(6);
+	PARAR(6),
+	MSG_INICIO(7),
+	MSG_FIM(8);
 	
 	
 	private final int estado;

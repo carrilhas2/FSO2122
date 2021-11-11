@@ -1,17 +1,14 @@
 import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-
-import javax.swing.JTextField;
-import javax.swing.JLabel;
-import javax.swing.JButton;
-import javax.swing.JTextArea;
-import java.awt.event.ActionListener;
-import java.lang.annotation.Annotation;
-import java.util.logging.Logger;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 
 public class GUIServidor extends JFrame{
 
@@ -76,33 +73,28 @@ public class GUIServidor extends JFrame{
 				break;
 				
 			case CURVA_DIREITA:
-				robot.CurvarDireita(v.getRaio(), v.getAngulo(), true);
-				robot.Parar(false);
-
+				robot.curvarDireita(v.getRaio(), v.getAngulo());
 				estado = EnumEstados.LER_MENSAGEM;
 				break;
 				
 			case CURVA_ESQUERDA:
-				robot.CurvarEsquerda(v.getRaio(), v.getAngulo(), true);
-				robot.Parar(false);
+				robot.curvarEsquerda(v.getRaio(), v.getAngulo());
 				estado = EnumEstados.LER_MENSAGEM;
 
 				break;
 			
 			case FRENTE:
-				robot.Reta(v.getDistancia(), true);
-				robot.Parar(false);
+				robot.reta(v.getDistancia());
 				estado = EnumEstados.LER_MENSAGEM;
 
 				break;
 			case PARAR:
-				robot.Parar(true);
+				robot.parar();
 				estado = EnumEstados.LER_MENSAGEM;
 
 				break;
 			case TRAS:
-				robot.Reta(-v.getDistancia(), true);
-				robot.Parar(false);
+				robot.reta(-v.getDistancia());
 				estado = EnumEstados.LER_MENSAGEM;
 
 				break;
@@ -208,8 +200,10 @@ public class GUIServidor extends JFrame{
 				btnTras.setEnabled(abrir);
 				
 				if(abrir) {
-					robot = new MyRobotLego(false, ILogger);
-					canal.abrirCanal(textFldNome.getText());
+					robot = new MyRobotLego();
+					robot.setNomeRobot(v.getNomeRobot());
+					robot.startRobot();
+					canal.abrirCanal("teste");
 				} else {
 					canal.fecharCanal();
 				}

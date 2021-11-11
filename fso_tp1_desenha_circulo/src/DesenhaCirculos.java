@@ -1,18 +1,16 @@
-import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-import javax.swing.JTextArea;
-import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
-import javax.swing.ButtonModel;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 
 public class DesenhaCirculos extends JFrame {
 
@@ -53,7 +51,6 @@ public class DesenhaCirculos extends JFrame {
 		v = new VariaveisDesenharCirculos();
 		canal = new CanalComunicacao();
 		canal.abrirCanal("teste");
-		canal.getAndSet(new Mensagem(1, "teste Desenhar Circulo"));
 	}
 
 	/**
@@ -145,14 +142,16 @@ public class DesenhaCirculos extends JFrame {
 	}
 	
 	private void desenharCirculos(int nCirculos, String raio) {
+		canal.getAndSet(new Mensagem(EnumEstados.INICIAR_SEQUENCIA.getEstado(), serialVersionUID));
 		for (int i = 0; i < nCirculos; i++) {
 			if(buttonGroup.getSelection().getActionCommand() == "direita") {
-				Mensagem msg = new Mensagem(EnumEstados.CURVA_DIREITA.getEstado(), raio);
+				Mensagem msg = new Mensagem(EnumEstados.CURVA_DIREITA.getEstado(), Integer.valueOf(raio), 360, serialVersionUID);
 				canal.getAndSet(msg);
 			} else {
-				Mensagem msg = new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), raio);
+				Mensagem msg = new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), Integer.valueOf(raio), 360, serialVersionUID);
 				canal.getAndSet(msg);
 			}			
 		}
+		canal.getAndSet(new Mensagem(EnumEstados.INICIAR_SEQUENCIA.getEstado(), serialVersionUID));
 	}
 }

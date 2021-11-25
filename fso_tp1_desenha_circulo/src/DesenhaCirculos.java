@@ -18,6 +18,7 @@ public class DesenhaCirculos extends JFrame {
 	 * 
 	 */
 	private static final long serialVersionUID = -8601216413492722888L;
+	private static final long IDCliente = System.currentTimeMillis();
 	private JPanel contentPane;
 	private double zoom = 1;
 	private JTextField textFldNCirculos;
@@ -142,16 +143,16 @@ public class DesenhaCirculos extends JFrame {
 	}
 	
 	private void desenharCirculos(int nCirculos, String raio) {
-		canal.getAndSet(new Mensagem(EnumEstados.INICIAR_SEQUENCIA.getEstado(), serialVersionUID));
+		canal.getAndSet(new Mensagem(EnumEstados.INICIAR_SEQUENCIA.getEstado(), IDCliente));
 		for (int i = 0; i < nCirculos; i++) {
 			if(buttonGroup.getSelection().getActionCommand() == "direita") {
-				Mensagem msg = new Mensagem(EnumEstados.CURVA_DIREITA.getEstado(), Integer.valueOf(raio), 360, serialVersionUID);
+				Mensagem msg = new Mensagem(EnumEstados.CURVA_DIREITA.getEstado(), Integer.valueOf(raio), 360, IDCliente);
 				canal.getAndSet(msg);
 			} else {
-				Mensagem msg = new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), Integer.valueOf(raio), 360, serialVersionUID);
+				Mensagem msg = new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), Integer.valueOf(raio), 360, IDCliente);
 				canal.getAndSet(msg);
 			}			
 		}
-		canal.getAndSet(new Mensagem(EnumEstados.INICIAR_SEQUENCIA.getEstado(), serialVersionUID));
+		canal.getAndSet(new Mensagem(EnumEstados.TERMINAR_SEQUENCIA.getEstado(), IDCliente));
 	}
 }

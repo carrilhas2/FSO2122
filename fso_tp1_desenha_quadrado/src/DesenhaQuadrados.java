@@ -51,7 +51,7 @@ public class DesenhaQuadrados extends JFrame {
 	
 	private void inicializarVariaveis() {
 		v = new VariaveisDesenharQuadrados();
-		canal = new CanalComunicacao();
+		canal = new CanalComunicacao(); 
 		canal.abrirCanal("teste");
 	}
 

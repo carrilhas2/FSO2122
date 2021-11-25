@@ -1,4 +1,3 @@
-import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -13,8 +12,10 @@ public class CanalComunicacao {
 	private static File file;
 	private static FileChannel canal;
 	
-	final static int MAX_BUFFER = 8448;//256bytes texto + 4bytes id + 4Bytes tipo * 32 mensagens 
+	private final static int MAX_BUFFER = 8448;//256bytes texto + 4bytes id + 4Bytes tipo * 32 mensagens 
 	private static int idx = 0;
+	private int idxPut , idxGet = 0;
+	private static final int delta = 264;
 
 	public CanalComunicacao() {
 		memoryMappedFile = null;
@@ -54,7 +55,7 @@ public class CanalComunicacao {
 	}
 
 	private Mensagem get() {
-		map.position(0);
+		map.position(idxGet);
 		
 		Integer id = map.getInt();
 		Integer tipo = map.getInt();
@@ -63,24 +64,32 @@ public class CanalComunicacao {
 			texto += map.getChar();
 		}
 
-		if(id != null && tipo != null) {
+		if(id != null && tipo != 0) {
 			Mensagem msg = new Mensagem(tipo,texto);
 			msg.setId(id);
 			idx = id+1;
+			System.out.println(msg.toString());
+			idxGet += delta;
+			if(idxGet == MAX_BUFFER) {
+				idxGet = 0;
+			}
 			return msg;
 		}
 		
-		return new Mensagem(EnumEstados.ESPERAR_MENSAGEM.getEstado(), "");
+		return new Mensagem(EnumEstados.ESPERAR_MENSAGEM.getEstado(), "m="+id);
 	}
 
 	private void put(Mensagem msg) {
-
-		map.position(0);
+		map.position(idxPut);
 		map.putInt(idx);
 		map.putInt(msg.getTipo());
 		for( char c : transformaTexto(msg.getTexto())) {
 			map.putChar(c);
 		};
+		idxPut += delta;
+		if(idxPut == MAX_BUFFER) {
+			idxPut = 0;
+		}
 	}
 
 	public void fecharCanal() {

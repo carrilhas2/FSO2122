@@ -4,13 +4,16 @@ public class Mensagem implements iMensagem{
 	private long idCliente = 0;
 	private String texto = "";
 	
-	public Mensagem(int tipo) {
+	public Mensagem(int tipo, String texto) {
 		this.tipo = tipo;
+		tratarTexto(texto);
+		
 	}
 	
 	public Mensagem(int tipo, long idCliente) {
 		this.tipo = tipo;
 		this.idCliente = idCliente;
+		criarTexto();
 	}
 
 	public Mensagem(int tipo, int raio,int angulo, long idCliente) {
@@ -18,14 +21,65 @@ public class Mensagem implements iMensagem{
 		this.raio = raio;
 		this.angulo = angulo;
 		this.idCliente = idCliente;
+		criarTexto();
 	}
 	
 	public Mensagem(int tipo, int distancia, long idCliente) {
 		this.tipo = tipo;
 		this.distancia = distancia;
 		this.idCliente = idCliente;
+		criarTexto();
+	}
+
+	private void tratarTexto(String texto) {
+		String[] p = texto.split(".");
+		for (String x : p) {
+			char key = x.charAt(0);
+			switch (key) {
+			case 'i':
+				this.idCliente = Long.parseLong(x.split("=")[1]);
+				break;
+			case 'a':
+				this.angulo = Integer.valueOf(x.split("=")[1]);
+				break;
+			case 'r':
+				this.raio = Integer.valueOf(x.split("=")[1]);
+				break;
+			case 'd':
+				this.distancia = Integer.valueOf(x.split("=")[1]);
+				break;
+			case 'm':
+				this.id = Integer.valueOf(x.split("=")[1]);
+				break;
+			}
+		}
 	}
 	
+	private void criarTexto() {
+		if(idCliente != 0) {
+			this.texto += "i="+idCliente+".";
+		}
+		if(angulo != 0) {
+			this.texto += "a="+angulo+".";
+		}
+		if(raio != 0) {
+			this.texto += "r="+raio+".";
+		}
+		if(distancia != 0) {
+			this.texto += "d="+distancia+".";
+		}
+		if(id != 0) {
+			this.texto += "m="+id+".";
+		}
+		
+	}
+	
+	@Override
+	public String toString() {
+		return "Mensagem [id=" + id + ", tipo=" + tipo + ", angulo=" + angulo + ", raio=" + raio + ", distancia="
+				+ distancia + ", idCliente=" + idCliente + ", texto=" + texto + "]";
+	}
+
 	public int getTipo() {
 		return tipo;
 	}

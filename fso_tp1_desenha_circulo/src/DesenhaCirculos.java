@@ -30,7 +30,7 @@ public class DesenhaCirculos extends JFrame {
 	private JButton btnDesenharCirculo;
 	private int numeroInstrucao = 1;
 	private VariaveisDesenharCirculos v;
-	private CanalComunicacao canal;
+	private static CanalComunicacao canal;
 
 	/**
 	 * Launch the application.
@@ -51,7 +51,7 @@ public class DesenhaCirculos extends JFrame {
 	private void inicializarVariaveis() {
 		v = new VariaveisDesenharCirculos();
 		canal = new CanalComunicacao();
-		canal.abrirCanal("teste");
+		canal.abrirCanal("../teste");
 	}
 
 	/**
@@ -143,7 +143,7 @@ public class DesenhaCirculos extends JFrame {
 	}
 	
 	private void desenharCirculos(int nCirculos, String raio) {
-		canal.getAndSet(new Mensagem(EnumEstados.INICIAR_SEQUENCIA.getEstado(), IDCliente));
+		canal.getAndSet(new Mensagem(EnumEstados.INICIAR_SEQUENCIA.getEstado(), IDCliente)); 
 		for (int i = 0; i < nCirculos; i++) {
 			if(buttonGroup.getSelection().getActionCommand() == "direita") {
 				Mensagem msg = new Mensagem(EnumEstados.CURVA_DIREITA.getEstado(), Integer.valueOf(raio), 360, IDCliente);

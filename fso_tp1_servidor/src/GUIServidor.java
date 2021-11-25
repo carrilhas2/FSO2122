@@ -15,8 +15,9 @@ import javax.swing.border.EmptyBorder;
 public class GUIServidor extends JFrame{
 
 	private static final long serialVersionUID = 6753842018479579961L;
+	private static final long IDServidor = System.currentTimeMillis();
 	private static boolean ativo;
-	private static EnumEstados estado;
+	private static EnumEstados estado = EnumEstados.LER_MENSAGEM;
 	private JPanel guiContentPane;
 	private JTextField textFldNome;
 	private JTextField textFldRaio;
@@ -33,7 +34,7 @@ public class GUIServidor extends JFrame{
 	private double zoom = 1;
 	private static Variaveis v;
 	private int numeroInstrucao = 1;
-	private static CanalComunicacao canal;
+	private static CanalComunicacao canal = new CanalComunicacao();
 	private static MyRobotLego robot;
 	private HashMap<String, ArrayList<Mensagem>> queueMap;
 	private int velocidadeRobot = 30;
@@ -66,7 +67,8 @@ public class GUIServidor extends JFrame{
 		while(ativo) {
 			switch (estado) {
 			case LER_MENSAGEM:
-				Mensagem msg = new Mensagem(EnumEstados.LER_MENSAGEM.getEstado());
+				System.out.println("LER MENSAGEM");
+				Mensagem msg = new Mensagem(EnumEstados.LER_MENSAGEM.getEstado(),IDServidor);
 				msgLida = canal.getAndSet(msg);
 				idCliente = String.valueOf(msgLida.getIdCliente());
 				
@@ -83,6 +85,7 @@ public class GUIServidor extends JFrame{
 				break;
 				
 			case ESPERAR_MENSAGEM:
+				System.out.println("ESPERAR MENSAGEM");
 				try {
 					Thread.sleep(2000L);
 					estado = EnumEstados.LER_MENSAGEM;
@@ -93,11 +96,13 @@ public class GUIServidor extends JFrame{
 				break;
 				
 			case INICIAR_SEQUENCIA:
+				System.out.println("INICIAR SEQUENCIA");
 				queueMap.put(String.valueOf(msgLida.getIdCliente()), new ArrayList<Mensagem>());
 				estado = EnumEstados.LER_MENSAGEM;
 				break;
 				
 			case TERMINAR_SEQUENCIA:
+				System.out.println("TERMINAR SEQUENCIA");
 				msgLida = queueMap.get(idCliente).get(0);
 				queueMap.get(idCliente).remove(0);
 				
@@ -170,7 +175,7 @@ public class GUIServidor extends JFrame{
 				break;
 			case TRAS:
 				distancia = msgLida.getDistancia();
-				robot.reta(-distancia);
+				robot.reta(-distancia); 
 				
 				try {
 					long tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
@@ -188,7 +193,6 @@ public class GUIServidor extends JFrame{
 
 	private void inicializarVariaveis() {
 		v = new Variaveis();
-		canal = new CanalComunicacao();
 		queueMap = new HashMap<String, ArrayList<Mensagem>>();
 		
 	}
@@ -271,7 +275,7 @@ public class GUIServidor extends JFrame{
 		btnAbrir.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				abrir = !abrir;
-				escreverConsola(abrir ? "Abrir conexão ao robot" + textFldNome.getText() : "Fechar conexão ao robot" + textFldNome.getText());
+				escreverConsola(abrir ? "Abrir conexão ao robot :" + textFldNome.getText() : "Fechar conexão ao robot" + textFldNome.getText());
 				btnDireita.setEnabled(abrir);
 				btnEsquerda.setEnabled(abrir);
 				btnFrente.setEnabled(abrir);
@@ -282,9 +286,12 @@ public class GUIServidor extends JFrame{
 					robot = new MyRobotLego();
 					robot.setNomeRobot(v.getNomeRobot());
 					robot.startRobot();
-					canal.abrirCanal("teste");
+					canal.abrirCanal("../teste");
+					ativo = true;
 					gerirRobot();
 				} else {
+					ativo = false;
+					robot.closeRobot();
 					canal.fecharCanal();
 				}
 			}
@@ -304,7 +311,6 @@ public class GUIServidor extends JFrame{
 					long tempoDeExecucao = (v.getDistancia() / velocidadeRobot) * 1000;
 					Thread.sleep(tempoDeExecucao);
 				} catch (InterruptedException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}}
@@ -398,4 +404,9 @@ public class GUIServidor extends JFrame{
 		textAreaConsola.setText("\n" +numeroInstrucao + ": " + texto + textAreaConsola.getText());
 		numeroInstrucao++;
 	}
+
+	public static CanalComunicacao getCanal() {
+		return canal;
+	}
+
 }

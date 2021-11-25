@@ -1,6 +1,8 @@
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -33,6 +35,8 @@ public class GUIServidor extends JFrame{
 	private int numeroInstrucao = 1;
 	private static CanalComunicacao canal;
 	private static MyRobotLego robot;
+	private HashMap<String, ArrayList<Mensagem>> queueMap;
+	private int velocidadeRobot = 30;
 	
 
 	/**
@@ -53,13 +57,29 @@ public class GUIServidor extends JFrame{
 			}});
 	}
 	
-	private static void gerirRobot() {
+	private void gerirRobot() {
+		Mensagem msgLida = null;
+		String idCliente = "";
+		int distancia = 0;
+		int raio = 0;
+		double angulo = 0.0;
 		while(ativo) {
 			switch (estado) {
 			case LER_MENSAGEM:
-				Mensagem msg = new Mensagem(EnumEstados.LER_MENSAGEM.getEstado(), "");
-				Mensagem msgLida = canal.getAndSet(msg);
-				estado = EnumEstados.getEstadoPorTipo(tratarMensagem(msgLida).getTipo());
+				Mensagem msg = new Mensagem(EnumEstados.LER_MENSAGEM.getEstado());
+				msgLida = canal.getAndSet(msg);
+				idCliente = String.valueOf(msgLida.getIdCliente());
+				
+				if(queueMap.containsKey(idCliente)) {
+					ArrayList<Mensagem> temp = queueMap.get(idCliente);
+					temp.add(msgLida);
+					queueMap.put(idCliente, temp);
+					if(msgLida.getTipo() != EnumEstados.TERMINAR_SEQUENCIA.getEstado()) {
+						break;
+					}
+				}
+				
+				estado = EnumEstados.getEstadoPorTipo(msgLida.getTipo());
 				break;
 				
 			case ESPERAR_MENSAGEM:
@@ -72,46 +92,105 @@ public class GUIServidor extends JFrame{
 				}
 				break;
 				
-			case CURVA_DIREITA:
-				robot.curvarDireita(v.getRaio(), v.getAngulo());
+			case INICIAR_SEQUENCIA:
+				queueMap.put(String.valueOf(msgLida.getIdCliente()), new ArrayList<Mensagem>());
 				estado = EnumEstados.LER_MENSAGEM;
 				break;
 				
-			case CURVA_ESQUERDA:
-				robot.curvarEsquerda(v.getRaio(), v.getAngulo());
-				estado = EnumEstados.LER_MENSAGEM;
+			case TERMINAR_SEQUENCIA:
+				msgLida = queueMap.get(idCliente).get(0);
+				queueMap.get(idCliente).remove(0);
+				
+				if(msgLida.getTipo() == EnumEstados.TERMINAR_SEQUENCIA.getEstado()) {
+					queueMap.remove(idCliente);
+					estado = EnumEstados.LER_MENSAGEM;
+					break;
+				}
+				
+				estado = EnumEstados.getEstadoPorTipo(msgLida.getTipo());
+				break;
+				
+			case CURVA_DIREITA:
+				raio = msgLida.getRaio();
+				angulo = msgLida.getAngulo();
 
+				distancia = (int) (Math.toRadians(angulo)  * raio);
+				
+				robot.curvarDireita(raio, (int)angulo);
+				
+				try {
+					long tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
+					Thread.sleep(tempoDeExecucao);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				estado = EnumEstados.TERMINAR_SEQUENCIA;
+				break;
+				
+			case CURVA_ESQUERDA:
+				raio = msgLida.getRaio();
+				angulo = msgLida.getAngulo();
+
+				distancia = (int) (Math.toRadians(angulo)  * raio);
+				robot.curvarEsquerda(raio, (int)angulo);
+
+				try {
+					long tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
+					Thread.sleep(tempoDeExecucao);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				estado = EnumEstados.TERMINAR_SEQUENCIA;
+				
 				break;
 			
 			case FRENTE:
-				robot.reta(v.getDistancia());
-				estado = EnumEstados.LER_MENSAGEM;
+				distancia = msgLida.getDistancia();
+				robot.reta(distancia);
 
+				try {
+					long tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
+					Thread.sleep(tempoDeExecucao);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				estado = EnumEstados.TERMINAR_SEQUENCIA;
 				break;
+				
 			case PARAR:
 				robot.parar();
-				estado = EnumEstados.LER_MENSAGEM;
+				estado = EnumEstados.TERMINAR_SEQUENCIA;
 
 				break;
 			case TRAS:
-				robot.reta(-v.getDistancia());
-				estado = EnumEstados.LER_MENSAGEM;
-
+				distancia = msgLida.getDistancia();
+				robot.reta(-distancia);
+				
+				try {
+					long tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
+					Thread.sleep(tempoDeExecucao);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				estado = EnumEstados.TERMINAR_SEQUENCIA;
 				break;
 			}
 		}
 	}
 
-	private static Mensagem tratarMensagem(Mensagem msg) {
-		// TODO Auto-generated method stub
-		
-		return null;
-	}
-
 	private void inicializarVariaveis() {
 		v = new Variaveis();
 		canal = new CanalComunicacao();
-		System.out.println("msg: " + canal.getAndSet(new Mensagem(EnumEstados.LER_MENSAGEM.getEstado(), "")).getTexto());
+		queueMap = new HashMap<String, ArrayList<Mensagem>>();
+		
 	}
 
 	/**
@@ -204,6 +283,7 @@ public class GUIServidor extends JFrame{
 					robot.setNomeRobot(v.getNomeRobot());
 					robot.startRobot();
 					canal.abrirCanal("teste");
+					gerirRobot();
 				} else {
 					canal.fecharCanal();
 				}
@@ -218,6 +298,15 @@ public class GUIServidor extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				if(abrir) {
 				escreverConsola("Andar em frente. Distancia: " + textFldDistancia.getText());
+				robot.reta(v.getDistancia());
+				
+				try {
+					long tempoDeExecucao = (v.getDistancia() / velocidadeRobot) * 1000;
+					Thread.sleep(tempoDeExecucao);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}}
 		});
 		btnFrente.setBounds(534, 80, (int) (148*zoom), (int) (45*zoom));
@@ -229,6 +318,7 @@ public class GUIServidor extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				if(abrir) {
 					escreverConsola("Parar");
+					robot.parar();
 			}}
 		});
 		btnParar.setBounds(534, 133, (int) (148*zoom), (int) (45*zoom));
@@ -240,6 +330,14 @@ public class GUIServidor extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				if(abrir) {
 					escreverConsola("Andar para tras. Distancia: " + textFldDistancia.getText());
+					robot.reta(-v.getDistancia());
+					try {
+						long tempoDeExecucao = (v.getDistancia() / velocidadeRobot) * 1000;
+						Thread.sleep(tempoDeExecucao);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}
 			}
 		});
@@ -252,6 +350,16 @@ public class GUIServidor extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				if(abrir) {
 					escreverConsola("Andar para a esquerda. Angulo: " + textFldAngulo.getText() + " Raio: " + textFldRaio.getText());
+					robot.curvarEsquerda(v.getRaio(), v.getAngulo());
+					int distancia = (int) (Math.toRadians(v.getAngulo())  * v.getRaio());
+
+					try {
+						long tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
+						Thread.sleep(tempoDeExecucao);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}
 			}
 		});
@@ -264,6 +372,16 @@ public class GUIServidor extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				if(abrir) {
 					escreverConsola("Andar para a direita. Angulo: " + textFldAngulo.getText() + " Raio: " + textFldRaio.getText());
+					robot.curvarDireita(v.getRaio(), v.getAngulo());
+					int distancia = (int) (Math.toRadians(v.getAngulo())  * v.getRaio());
+
+					try {
+						long tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
+						Thread.sleep(tempoDeExecucao);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}
 			}
 		});

@@ -1,4 +1,3 @@
-import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -52,7 +51,7 @@ public class DesenhaQuadrados extends JFrame {
 	private void inicializarVariaveis() {
 		v = new VariaveisDesenharQuadrados();
 		canal = new CanalComunicacao(); 
-		canal.abrirCanal("../teste");
+		canal.abrirCanal("../teste.txt");
 	}
 
 	/**
@@ -145,16 +144,16 @@ public class DesenhaQuadrados extends JFrame {
 
 	private void desenharQuadrados(int nQuadrados, String distancia) {
 		canal.getAndSet(new Mensagem(EnumEstados.INICIAR_SEQUENCIA.getEstado(), IDCliente));
-
+		EnumEstados estado = (buttonGroup.getSelection().getActionCommand() == "direita")? EnumEstados.CURVA_DIREITA:EnumEstados.CURVA_ESQUERDA;
 		for(int i = 0; i < nQuadrados; i++) {
 			canal.getAndSet(new Mensagem(EnumEstados.FRENTE.getEstado(), Integer.valueOf(distancia), IDCliente));
-			canal.getAndSet(new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), 0, 84, IDCliente));
+			canal.getAndSet(new Mensagem(estado.getEstado(), 0, 84, IDCliente));
 			canal.getAndSet(new Mensagem(EnumEstados.FRENTE.getEstado(), Integer.valueOf(distancia), IDCliente));
-			canal.getAndSet(new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), 0, 84, IDCliente));
+			canal.getAndSet(new Mensagem(estado.getEstado(), 0, 84, IDCliente));
 			canal.getAndSet(new Mensagem(EnumEstados.FRENTE.getEstado(), Integer.valueOf(distancia), IDCliente));
-			canal.getAndSet(new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), 0, 84, IDCliente));
+			canal.getAndSet(new Mensagem(estado.getEstado(), 0, 84, IDCliente));
 			canal.getAndSet(new Mensagem(EnumEstados.FRENTE.getEstado(), Integer.valueOf(distancia), IDCliente));
-			canal.getAndSet(new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), 0, 84, IDCliente));
+			canal.getAndSet(new Mensagem(estado.getEstado(), 0, 84, IDCliente));
 		}
 		
 		canal.getAndSet(new Mensagem(EnumEstados.TERMINAR_SEQUENCIA.getEstado(), IDCliente));

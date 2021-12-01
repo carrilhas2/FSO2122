@@ -14,6 +14,8 @@ import javax.swing.border.EmptyBorder;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class GUIServidor extends JFrame{
 
@@ -108,8 +110,10 @@ public class GUIServidor extends JFrame{
 			case TERMINAR_SEQUENCIA:
 				System.out.println("TERMINAR_SEQUENCIA");
 				if(queueMap.containsKey(idCliente) && !queueMap.get(idCliente).isEmpty()) {
-					queueMap.get(idCliente).sort(new IDSorter());
-					msgLida = queueMap.get(idCliente).remove(0);
+					ArrayList<Mensagem> temp = queueMap.get(idCliente);
+					temp.sort(new IDSorter());
+					msgLida = temp.remove(0);
+					queueMap.put(idCliente,temp);
 					if(queueMap.get(idCliente).isEmpty()) {
 						queueMap.remove(idCliente);
 					}
@@ -186,6 +190,14 @@ public class GUIServidor extends JFrame{
 	 * Create the frame.
 	 */
 	public GUIServidor() {
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent arg0) {
+				ativo = false;
+				robot.closeRobot();
+				canal.fecharCanal();
+			}
+		});
 		inicializarVariaveis();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, (int) (900*zoom), (int) (600*zoom));
@@ -271,7 +283,7 @@ public class GUIServidor extends JFrame{
 					robot = new MyRobotLego();
 					robot.setNomeRobot(v.getNomeRobot());
 					robot.startRobot();
-					canal.abrirCanal("../teste");
+					canal.abrirCanal("../teste.txt");
 					ativo = true;
 					gerirRobot();
 				} else {

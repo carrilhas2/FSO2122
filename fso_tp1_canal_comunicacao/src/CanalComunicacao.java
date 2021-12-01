@@ -4,6 +4,8 @@ import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.file.Files;
+
 
 public class CanalComunicacao {
 
@@ -12,17 +14,17 @@ public class CanalComunicacao {
 	private static File file;
 	private static FileChannel canal;
 	
-	private final static int MAX_BUFFER = 16640;//512bytes texto + 4bytes id + 4Bytes tipo * 32 mensagens 
-	private static int idx = 0;
-	private static int idxPut , idxGet = 0;
+	private static final int MAX_BUFFER = 16644;//512bytes texto + 4bytes id + 4Bytes tipo * 32 mensagens 
 	private static final int delta = 520;
-
+	private static int idxPut , idxGet = 4;
+	private static int idx = 0;
+	
 	public CanalComunicacao() {
 		memoryMappedFile = null;
 		map = null;
 		canal = null;
 		file = null;
-		//file.deleteOnExit();
+		
 	}
 	
 	public void abrirCanal(String nomeFicheiro) {
@@ -34,6 +36,7 @@ public class CanalComunicacao {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
 	}
 
 	public Mensagem getAndSet(Mensagem msg) {
@@ -53,10 +56,15 @@ public class CanalComunicacao {
 		}
 		return null;
 	}
-//TODO: dar fix no texto
+	
+	private void apagarRegisto() {
+		map.position(idxGet);
+		map.put(new byte[delta]);
+	}
+	
 	private Mensagem get() {
 		if(idxGet >= MAX_BUFFER) {
-			idxGet = 0;
+			idxGet = 4;
 		}
 		map.position(idxGet);
 		if(map.hasRemaining()) {
@@ -69,11 +77,15 @@ public class CanalComunicacao {
 			if(id != null && EnumEstados.getEstadoPorTipo(tipo) != null && tipo != 0) {
 				Mensagem msg = new Mensagem(tipo,texto);
 				msg.setId(id);
+				apagarRegisto();
 				System.out.println(texto);
 				idxGet += delta;
 				
 				return msg;
 			}
+		}
+		else {
+			idxGet = 4;
 		}
 		
 		
@@ -81,8 +93,10 @@ public class CanalComunicacao {
 	}
 
 	private void put(Mensagem msg) {
-		if(idxPut >= MAX_BUFFER) {
-			idxPut = 0;
+		map.position(0);
+		idxPut = map.getInt();
+		if(idxPut >= MAX_BUFFER || idxPut == 0) {
+			idxPut = 4;
 		}
 		map.position(idxPut);
 		System.out.println(idxPut);
@@ -94,11 +108,23 @@ public class CanalComunicacao {
 		};
 		idxPut += delta;
 		idx++;
+		map.position(0);
+		map.putInt(idxPut);
+		
 	}
 
 	public void fecharCanal() {
 		try {
-			CanalComunicacao.memoryMappedFile.close();
+			canal.close();
+			memoryMappedFile.close();
+			Files.delete(file.toPath());
+			if (!file.exists()) { 
+				System.out.println("Deleted the file: " + file.getName());
+			}
+			else {
+				System.out.println("failed to delete file");
+			}
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

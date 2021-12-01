@@ -51,7 +51,7 @@ public class DesenhaCirculos extends JFrame {
 	private void inicializarVariaveis() {
 		v = new VariaveisDesenharCirculos();
 		canal = new CanalComunicacao();
-		canal.abrirCanal("../teste");
+		canal.abrirCanal("../teste.txt");
 	}
 
 	/**

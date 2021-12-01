@@ -11,6 +11,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class GUIServidor extends JFrame{
 
@@ -38,6 +41,8 @@ public class GUIServidor extends JFrame{
 	private static MyRobotLego robot;
 	private HashMap<String, ArrayList<Mensagem>> queueMap;
 	private int velocidadeRobot = 30;
+	private ScheduledExecutorService oneThreadScheduleExecutor;
+	private String idCliente = "";
 	
 
 	/**
@@ -45,155 +50,135 @@ public class GUIServidor extends JFrame{
 	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
-			
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
 				try {
 					GUIServidor frame = new GUIServidor();
 					frame.setVisible(true);
+					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-			}});
+			}
+			
+		});
 	}
 	
 	private void gerirRobot() {
 		Mensagem msgLida = null;
-		String idCliente = "";
 		int distancia = 0;
 		int raio = 0;
 		double angulo = 0.0;
+		long tempoDeExecucao;
+		ativo = true;
+		
 		while(ativo) {
 			switch (estado) {
 			case LER_MENSAGEM:
-				System.out.println("LER MENSAGEM");
+				System.out.println("LER_MENSAGEM");
 				Mensagem msg = new Mensagem(EnumEstados.LER_MENSAGEM.getEstado(),IDServidor);
 				msgLida = canal.getAndSet(msg);
 				idCliente = String.valueOf(msgLida.getIdCliente());
 				
-				if(queueMap.containsKey(idCliente)) {
+				if(queueMap.containsKey(idCliente) && msgLida.getTipo() != EnumEstados.TERMINAR_SEQUENCIA.getEstado()) {
 					ArrayList<Mensagem> temp = queueMap.get(idCliente);
 					temp.add(msgLida);
 					queueMap.put(idCliente, temp);
-					if(msgLida.getTipo() != EnumEstados.TERMINAR_SEQUENCIA.getEstado()) {
-						break;
-					}
+					break;
 				}
-				
-				estado = EnumEstados.getEstadoPorTipo(msgLida.getTipo());
+				else {
+					estado = EnumEstados.getEstadoPorTipo(msgLida.getTipo());
+				}
 				break;
 				
 			case ESPERAR_MENSAGEM:
-				System.out.println("ESPERAR MENSAGEM");
-				try {
-					Thread.sleep(2000L);
-					estado = EnumEstados.LER_MENSAGEM;
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				System.out.println("ESPERAR_MENSAGEM");
+				estado = EnumEstados.LER_MENSAGEM;
+				oneThreadScheduleExecutor.schedule(()->{gerirRobot();}, 2L, TimeUnit.SECONDS);
+				ativo = false;
 				break;
 				
 			case INICIAR_SEQUENCIA:
-				System.out.println("INICIAR SEQUENCIA");
+				System.out.println("INICIAR_SEQUENCIA");
 				queueMap.put(String.valueOf(msgLida.getIdCliente()), new ArrayList<Mensagem>());
 				estado = EnumEstados.LER_MENSAGEM;
 				break;
 				
 			case TERMINAR_SEQUENCIA:
-				System.out.println("TERMINAR SEQUENCIA");
-				msgLida = queueMap.get(idCliente).get(0);
-				queueMap.get(idCliente).remove(0);
-				
-				if(msgLida.getTipo() == EnumEstados.TERMINAR_SEQUENCIA.getEstado()) {
-					queueMap.remove(idCliente);
+				System.out.println("TERMINAR_SEQUENCIA");
+				if(queueMap.containsKey(idCliente) && !queueMap.get(idCliente).isEmpty()) {
+					queueMap.get(idCliente).sort(new IDSorter());
+					msgLida = queueMap.get(idCliente).remove(0);
+					if(queueMap.get(idCliente).isEmpty()) {
+						queueMap.remove(idCliente);
+					}
+					estado = EnumEstados.getEstadoPorTipo(msgLida.getTipo());
+				}else {
 					estado = EnumEstados.LER_MENSAGEM;
-					break;
 				}
 				
-				estado = EnumEstados.getEstadoPorTipo(msgLida.getTipo());
 				break;
 				
 			case CURVA_DIREITA:
+				System.out.println("CURVA_DIREITA");
 				raio = msgLida.getRaio();
 				angulo = msgLida.getAngulo();
 
 				distancia = (int) (Math.toRadians(angulo)  * raio);
-				
 				robot.curvarDireita(raio, (int)angulo);
-				
-				try {
-					long tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
-					Thread.sleep(tempoDeExecucao);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
+				tempoDeExecucao = (distancia / velocidadeRobot);
 				estado = EnumEstados.TERMINAR_SEQUENCIA;
+				oneThreadScheduleExecutor.schedule(()->{gerirRobot();}, tempoDeExecucao, TimeUnit.SECONDS);
+				ativo = false;
 				break;
 				
 			case CURVA_ESQUERDA:
+				System.out.println("CURVA_ESQUERDA");
 				raio = msgLida.getRaio();
 				angulo = msgLida.getAngulo();
 
 				distancia = (int) (Math.toRadians(angulo)  * raio);
 				robot.curvarEsquerda(raio, (int)angulo);
-
-				try {
-					long tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
-					Thread.sleep(tempoDeExecucao);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
+				tempoDeExecucao = (distancia / velocidadeRobot);
 				estado = EnumEstados.TERMINAR_SEQUENCIA;
-				
+				oneThreadScheduleExecutor.schedule(()->{gerirRobot();}, tempoDeExecucao, TimeUnit.SECONDS);
+				ativo = false;
 				break;
 			
 			case FRENTE:
+				System.out.println("FRENTE");
 				distancia = msgLida.getDistancia();
 				robot.reta(distancia);
-
-				try {
-					long tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
-					Thread.sleep(tempoDeExecucao);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
+				tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
 				estado = EnumEstados.TERMINAR_SEQUENCIA;
+				oneThreadScheduleExecutor.schedule(()->{gerirRobot();}, tempoDeExecucao, TimeUnit.SECONDS);
+				ativo = false;
 				break;
 				
 			case PARAR:
+				System.out.println("PARAR");
 				robot.parar();
 				estado = EnumEstados.TERMINAR_SEQUENCIA;
-
 				break;
+
 			case TRAS:
+				System.out.println("TRAS");
 				distancia = msgLida.getDistancia();
 				robot.reta(-distancia); 
-				
-				try {
-					long tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
-					Thread.sleep(tempoDeExecucao);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
+				tempoDeExecucao = (distancia / velocidadeRobot) * 1000;
 				estado = EnumEstados.TERMINAR_SEQUENCIA;
+				oneThreadScheduleExecutor.schedule(()->{gerirRobot();}, tempoDeExecucao, TimeUnit.SECONDS);
+				ativo = false;
 				break;
 			}
 		}
 	}
-
+	
 	private void inicializarVariaveis() {
 		v = new Variaveis();
 		queueMap = new HashMap<String, ArrayList<Mensagem>>();
+		oneThreadScheduleExecutor = Executors.newScheduledThreadPool(1);
 		
 	}
 

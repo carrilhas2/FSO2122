@@ -12,10 +12,10 @@ public class CanalComunicacao {
 	private static File file;
 	private static FileChannel canal;
 	
-	private final static int MAX_BUFFER = 8448;//256bytes texto + 4bytes id + 4Bytes tipo * 32 mensagens 
+	private final static int MAX_BUFFER = 16640;//512bytes texto + 4bytes id + 4Bytes tipo * 32 mensagens 
 	private static int idx = 0;
-	private int idxPut , idxGet = 0;
-	private static final int delta = 264;
+	private static int idxPut , idxGet = 0;
+	private static final int delta = 520;
 
 	public CanalComunicacao() {
 		memoryMappedFile = null;
@@ -53,43 +53,47 @@ public class CanalComunicacao {
 		}
 		return null;
 	}
-
+//TODO: dar fix no texto
 	private Mensagem get() {
+		if(idxGet >= MAX_BUFFER) {
+			idxGet = 0;
+		}
 		map.position(idxGet);
-		
-		Integer id = map.getInt();
-		Integer tipo = map.getInt();
-		String texto = "";
-		for(int i = 0; i<256; i++) {
-			texto += map.getChar();
-		}
-
-		if(id != null && tipo != 0) {
-			Mensagem msg = new Mensagem(tipo,texto);
-			msg.setId(id);
-			idx = id+1;
-			System.out.println(msg.toString());
-			idxGet += delta;
-			if(idxGet == MAX_BUFFER) {
-				idxGet = 0;
+		if(map.hasRemaining()) {
+			Integer id = map.getInt();
+			Integer tipo = map.getInt();
+			String texto = "";
+			for(int i = 0; i<256; i++) {
+				texto += map.getChar();
 			}
-			return msg;
+			if(id != null && EnumEstados.getEstadoPorTipo(tipo) != null && tipo != 0) {
+				Mensagem msg = new Mensagem(tipo,texto);
+				msg.setId(id);
+				System.out.println(texto);
+				idxGet += delta;
+				
+				return msg;
+			}
 		}
 		
-		return new Mensagem(EnumEstados.ESPERAR_MENSAGEM.getEstado(), "m="+id);
+		
+		return new Mensagem(EnumEstados.ESPERAR_MENSAGEM.getEstado(), "m="+0);
 	}
 
 	private void put(Mensagem msg) {
+		if(idxPut >= MAX_BUFFER) {
+			idxPut = 0;
+		}
 		map.position(idxPut);
+		System.out.println(idxPut);
 		map.putInt(idx);
 		map.putInt(msg.getTipo());
-		for( char c : transformaTexto(msg.getTexto())) {
+		char[] temp = transformaTexto(msg.getTexto());
+		for( char c : temp) {
 			map.putChar(c);
 		};
 		idxPut += delta;
-		if(idxPut == MAX_BUFFER) {
-			idxPut = 0;
-		}
+		idx++;
 	}
 
 	public void fecharCanal() {

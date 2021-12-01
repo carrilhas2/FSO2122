@@ -19,7 +19,7 @@ public class DesenhaQuadrados extends JFrame {
 	 * 
 	 */
 	private static final long serialVersionUID = -8601216413492722888L;
-	private static final long IDCliente = System.currentTimeMillis();
+	private static final long IDCliente = System.currentTimeMillis()+2L;
 	private JPanel contentPane;
 	private double zoom = 1;
 	private JTextField textFldNQuadrados;
@@ -52,7 +52,7 @@ public class DesenhaQuadrados extends JFrame {
 	private void inicializarVariaveis() {
 		v = new VariaveisDesenharQuadrados();
 		canal = new CanalComunicacao(); 
-		canal.abrirCanal("teste");
+		canal.abrirCanal("../teste");
 	}
 
 	/**
@@ -144,20 +144,17 @@ public class DesenhaQuadrados extends JFrame {
 	
 
 	private void desenharQuadrados(int nQuadrados, String distancia) {
-		Mensagem msgReta = new Mensagem(EnumEstados.FRENTE.getEstado(), Integer.valueOf(distancia), IDCliente);
-		Mensagem msgCurvaEsq = new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), 0, 90, IDCliente);
-		
 		canal.getAndSet(new Mensagem(EnumEstados.INICIAR_SEQUENCIA.getEstado(), IDCliente));
 
 		for(int i = 0; i < nQuadrados; i++) {
-			canal.getAndSet(msgReta);
-			canal.getAndSet(msgCurvaEsq);
-			canal.getAndSet(msgReta);
-			canal.getAndSet(msgCurvaEsq);
-			canal.getAndSet(msgReta);
-			canal.getAndSet(msgCurvaEsq);
-			canal.getAndSet(msgReta);
-			canal.getAndSet(msgCurvaEsq);
+			canal.getAndSet(new Mensagem(EnumEstados.FRENTE.getEstado(), Integer.valueOf(distancia), IDCliente));
+			canal.getAndSet(new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), 0, 84, IDCliente));
+			canal.getAndSet(new Mensagem(EnumEstados.FRENTE.getEstado(), Integer.valueOf(distancia), IDCliente));
+			canal.getAndSet(new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), 0, 84, IDCliente));
+			canal.getAndSet(new Mensagem(EnumEstados.FRENTE.getEstado(), Integer.valueOf(distancia), IDCliente));
+			canal.getAndSet(new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), 0, 84, IDCliente));
+			canal.getAndSet(new Mensagem(EnumEstados.FRENTE.getEstado(), Integer.valueOf(distancia), IDCliente));
+			canal.getAndSet(new Mensagem(EnumEstados.CURVA_ESQUERDA.getEstado(), 0, 84, IDCliente));
 		}
 		
 		canal.getAndSet(new Mensagem(EnumEstados.TERMINAR_SEQUENCIA.getEstado(), IDCliente));

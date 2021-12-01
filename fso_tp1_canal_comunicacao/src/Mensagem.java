@@ -6,6 +6,7 @@ public class Mensagem implements iMensagem{
 	
 	public Mensagem(int tipo, String texto) {
 		this.tipo = tipo;
+		this.texto = texto;
 		tratarTexto(texto);
 		
 	}
@@ -32,7 +33,7 @@ public class Mensagem implements iMensagem{
 	}
 
 	private void tratarTexto(String texto) {
-		String[] p = texto.split(".");
+		String[] p = texto.split("/");
 		for (String x : p) {
 			char key = x.charAt(0);
 			switch (key) {
@@ -56,20 +57,19 @@ public class Mensagem implements iMensagem{
 	}
 	
 	private void criarTexto() {
+		this.texto = "";
 		if(idCliente != 0) {
-			this.texto += "i="+idCliente+".";
+			this.texto += "i="+idCliente+"/";
 		}
 		if(angulo != 0) {
-			this.texto += "a="+angulo+".";
-		}
-		if(raio != 0) {
-			this.texto += "r="+raio+".";
+			this.texto += "a="+angulo+"/";
+			this.texto += "r="+raio+"/";
 		}
 		if(distancia != 0) {
-			this.texto += "d="+distancia+".";
+			this.texto += "d="+distancia+"/";
 		}
 		if(id != 0) {
-			this.texto += "m="+id+".";
+			this.texto += "m="+id+"/";
 		}
 		
 	}

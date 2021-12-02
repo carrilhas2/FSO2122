@@ -63,7 +63,7 @@ public class CanalComunicacao {
 	}
 	
 	private Mensagem get() {
-		if(idxGet >= MAX_BUFFER) {
+		if(idxGet >= MAX_BUFFER || idxGet == 0) {
 			idxGet = 4;
 		}
 		map.position(idxGet);
@@ -99,7 +99,7 @@ public class CanalComunicacao {
 			idxPut = 4;
 		}
 		map.position(idxPut);
-		System.out.println(idxPut);
+		//System.out.println(idxPut);
 		map.putInt(idx);
 		map.putInt(msg.getTipo());
 		char[] temp = transformaTexto(msg.getTexto());
@@ -117,12 +117,11 @@ public class CanalComunicacao {
 		try {
 			canal.close();
 			memoryMappedFile.close();
-			Files.delete(file.toPath());
-			if (!file.exists()) { 
-				System.out.println("Deleted the file: " + file.getName());
+			if (file.delete()) { 
+				System.out.println("Ficheiro apagado com sucesso");
 			}
 			else {
-				System.out.println("failed to delete file");
+				System.out.println("Nao foi possivel apagar o ficheiro");
 			}
 			
 		} catch (IOException e) {
